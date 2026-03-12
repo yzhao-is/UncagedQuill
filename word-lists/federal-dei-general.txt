@@ -1,0 +1,320 @@
+# Federal DEI — Broad Banned & Flagged Words List
+# Source: PEN America aggregated list (pen.org/banned-words-list/)
+# Compiled from reporting by NYT, Washington Post, Politico, Reuters, Gizmodo,
+# ProPublica, Science, 404 Media, and others.
+# Covers guidance from: NSF, CDC, USDA, DoD, DoE, FEMA, FDA, NASA,
+# National Cancer Institute, NSA, and the White House.
+# Last updated: December 2025 (PEN America continues to update this list)
+#
+# Usage: One word or phrase per line. Lines beginning with # are comments.
+# -------------------------------------------------------------------------
+
+abortion
+accessibility
+accessible
+activism
+activists
+advocacy
+advocate
+advocates
+affirmative action
+affirmative action programs
+affirming care
+affordable home
+affordable housing
+agricultural water
+agrivoltaics
+air pollution
+all-inclusive
+allyship
+alternative energy
+anti-racism
+antiracist
+asexual
+assigned at birth
+assigned female at birth
+assigned male at birth
+at risk
+autism
+aviation fuel
+barrier
+barriers
+belong
+bias
+biased
+biases
+bioenergy
+biofuel
+biogas
+biologically female
+biologically male
+biomethane
+BIPOC
+bisexual
+Black
+black and latinx
+breastfeed + people
+breastfeed + person
+Cancer Moonshot
+carbon emissions mitigation
+carbon footprint
+carbon markets
+carbon pricing
+carbon sequestration
+changing climate
+chestfeed + people
+chestfeed + person
+clean energy
+clean fuel
+clean power
+clean water
+climate
+climate accountability
+climate change
+climate consulting
+climate crisis
+climate model
+climate models
+climate resilience
+climate risk
+climate science
+climate smart agriculture
+climate smart forestry
+climate variability
+climatesmart
+commercial sex worker
+community
+community diversity
+community equity
+confirmation bias
+contaminants of environmental concern
+continuum
+Covid-19
+critical race theory
+cultural competence
+cultural differences
+cultural heritage
+cultural relevance
+cultural sensitivity
+culturally appropriate
+culturally responsive
+decarbonization
+DEI
+DEIA
+DEIAB
+DEIJ
+diesel
+disabilities
+disability
+disabled
+disadvantaged
+discriminated
+discrimination
+discriminatory
+disparity
+diverse
+diverse backgrounds
+diverse communities
+diverse community
+diverse group
+diverse groups
+diversified
+diversify
+diversifying
+diversity
+diversity and inclusion
+diversity in the workplace
+diversity, equity, and inclusion
+elderly
+electric vehicle
+emissions
+energy conversion
+energy transition
+environmental justice
+environmental quality
+equal opportunity
+equality
+equitable
+equitableness
+equity
+ethanol
+ethnicity
+evidence-based
+excluded
+exclusion
+female
+females
+feminism
+fetus
+fluoride
+fostering inclusivity
+fuel cell
+gay
+gender
+gender based
+gender based violence
+gender diversity
+gender dysphoria
+gender expression
+gender identity
+gender ideology
+gender nonconformity
+gender transition
+gender-affirming care
+gendered
+genders
+geothermal
+global warming
+green
+green infrastructure
+greenhouse gas emission
+groundwater pollution
+Gulf of Mexico
+H5N1
+hate
+hate speech
+health disparity
+health equity
+hispanic
+hispanic minority
+historically
+housing affordability
+hydrogen vehicle
+identity
+ideology
+immigrants
+implicit bias
+implicit biases
+inclusion
+inclusive
+inclusive leadership
+inclusiveness
+inclusivity
+indigenous
+indigenous community
+inequalities
+inequality
+inequitable
+inequities
+injustice
+institutional
+integration
+intersectional
+intersectionality
+intersex
+Latinx
+lesbian
+LGBT
+LGBTQ
+low-emission vehicle
+low-income housing
+male dominated
+marginalize
+marginalized
+marijuana
+measles
+men who have sex with men
+mental health
+methane emissions
+microplastics
+migrant
+minorities
+minority
+minority serving institution
+MSI
+multicultural
+Native American
+net-zero
+non-binary
+nonbinary
+noncitizen
+non-conforming
+nonpoint source pollution
+nuclear energy
+nuclear power
+obesity
+opioids
+oppression
+oppressive
+pansexual
+PFAS
+PFOA
+people of color
+people-centered care
+person-centered
+person-centered care
+photovoltaic
+polarization
+pollution
+pollution abatement
+pollution remediation
+pregnant people
+pregnant person
+pregnant persons
+prejudice
+privilege
+privileges
+promote diversity
+promoting diversity
+pronoun
+pronouns
+prostitute
+pyrolysis
+queer
+race
+race and ethnicity
+racial
+racial diversity
+racial identity
+racial inequality
+racial justice
+racially
+racism
+safe drinking water
+science-based
+segregation
+sense of belonging
+sex
+sexual preferences
+sexuality
+social justice
+social vulnerability
+socioeconomic status
+solar energy
+solar power
+stereotype
+stereotypes
+sustainability
+sustainable
+systemic
+systemically
+they/them
+trans
+transgender
+transgender military personnel
+transgender people
+trauma
+traumatic
+tribal
+two-spirit
+unconscious bias
+underprivileged
+underrepresentation
+underrepresented
+underserved
+understudied
+undervalued
+vaccines
+victim
+victims
+vulnerable
+vulnerable populations
+water conservation
+water pollution
+water quality
+white privilege
+wind power
+woman
+women
+women and underrepresented
+women in leadership
