@@ -1,0 +1,88 @@
+# NSF Trigger Words — Reference List
+# Source: Leaked internal NSF document (February 2025), reported by The Washington Post
+# and shared publicly by Dr. Darby Saxbe (USC). Not an official NSF publication.
+# Last updated: March 2025
+# More info: https://www.washingtonpost.com/science/2025/02/04/national-science-foundation-trump-executive-orders-words/
+#
+# These words were used by NSF staff to flag active research grants for review
+# under Executive Order 14151 ("Ending Radical And Wasteful Government DEI
+# Programs And Preferencing") signed January 20, 2025.
+#
+# Usage: One word or phrase per line. Lines beginning with # are comments.
+# -------------------------------------------------------------------------
+
+barrier
+bias
+biased
+biases
+BIPOC
+Black
+Black and Latinx
+community diversity
+confirmation bias
+cultural differences
+cultural heritage
+DEI
+DEIA
+disability
+disabilities
+discrimination
+disparity
+diverse
+diverse backgrounds
+diversity
+equality
+equity
+ethnicity
+evidence-based
+female
+females
+gender
+gender based
+gender identity
+hate speech
+hispanic
+hispanic minority
+historically
+implicit bias
+inclusion
+inclusive
+inclusivity
+injustice
+intersectionality
+LGBTQ
+male dominated
+marginalized
+mental health
+minority
+multicultural
+Native American
+oppression
+peanut allergies
+polarization
+prejudice
+privilege
+pronouns
+race
+racial
+racial identity
+racism
+science-based
+segregation
+sense of belonging
+sex
+social justice
+socioeconomic
+status
+stereotypes
+systemic
+systemically
+trans
+transgender
+trauma
+traumatic
+unconscious bias
+underrepresented
+underserved
+victim
+women
