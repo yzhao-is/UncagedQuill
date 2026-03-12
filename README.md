@@ -2,13 +2,13 @@
 
 > *Write what you mean. Say what you need.*
 
-A lightweight, fully offline tool that helps writers identify flagged or sensitive language in their documents and find alternative phrasing — so your ideas survive the gatekeeping without losing their meaning.
+A lightweight, fully offline tool that helps writers identify flagged or sensitive language in their documents and find alternative phrasing, so your writings survive the gatekeeping without losing your ideas.
 
 ---
 
 ## Who is this for?
 
-Researchers, grant applicants, and academic writers who navigate institutional language guidelines and want to revise strategically — without compromising the core of what they're saying.
+Anyone who writes and publishes within restrictive institutional environments. This is designed especially for researchers, grant applicants, and academic writers who navigate institutional language guidelines and want to revise without compromising the core of what they're saying.
 
 ---
 
