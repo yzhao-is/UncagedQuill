@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Uncaged Quill</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+  :root {
+    --bg:#f5f0e8; --surface:#ede8de; --surface2:#e4ddd0; --ink:#1a1612;
+    --ink2:#5a5248; --ink3:#9a9088; --accent:#c0392b; --accent2:#e05a3a;
+    --border:#cec8bc; --found:#1a6b3c; --found-bg:#e8f5ee;
+    --syn:#1a4a7a; --syn-bg:#deeaf5; --flag:#b85c00; --flag-bg:#fff3e0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+  header{background:var(--ink);color:var(--bg);padding:18px 48px;display:flex;align-items:center;justify-content:space-between;}
+  .logo-area{display:flex;align-items:center;gap:14px;}
+  .logo-mark{width:38px;height:38px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:4px;}
+  .logo-text{font-size:19px;font-weight:800;letter-spacing:-0.03em;}
+  .logo-sub{font-size:11px;color:#8a8278;font-family:'Fira Code',monospace;margin-top:2px;}
+  .offline-badge{font-family:'Fira Code',monospace;font-size:11px;padding:5px 12px;border:1px solid #3a3630;border-radius:20px;color:#6a9b6a;display:flex;align-items:center;gap:6px;}
+  .dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s infinite;}
+  .dot.online{background:#6a9b6a;}
+  .dot.offline{background:#c8a060;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .offline-badge.online{color:#6a9b6a;border-color:#3a5a3a;}
+  .offline-badge.offline{color:#c8a060;border-color:#5a4820;}
+  main{max-width:1160px;margin:0 auto;padding:36px 40px;}
+  .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:24px;}
+  .card-label{font-family:'Fira Code',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .card-label::before{content:'';width:20px;height:1px;background:var(--accent);}
+  .upload-zone{border:2px dashed var(--border);border-radius:2px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--surface2);}
+  .upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:#f5e8e6;}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .upload-icon{font-size:24px;margin-bottom:6px;}
+  .upload-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+  .upload-hint{font-size:11px;color:var(--ink3);font-family:'Fira Code',monospace;}
+  .file-loaded{margin-top:10px;padding:9px 13px;background:var(--found-bg);border:1px solid #a8d8b8;border-radius:2px;font-family:'Fira Code',monospace;font-size:12px;color:var(--found);display:flex;align-items:center;gap:8px;}
+  .trigger-chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:5px;max-height:90px;overflow-y:auto;}
+  .trigger-chip{padding:3px 9px;background:#fdecea;border:1px solid #f5b8b2;border-radius:2px;font-family:'Fira Code',monospace;font-size:11px;color:var(--accent);}
+  .analyze-row{display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+  .btn-primary{padding:12px 30px;background:var(--accent);color:#fff;border:none;border-radius:2px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s;display:flex;align-items:center;gap:8px;}
+  .btn-primary:hover:not(:disabled){background:var(--accent2);}
+  .btn-primary:active:not(:disabled){transform:scale(.98);}
+  .btn-primary:disabled{opacity:.35;cursor:not-allowed;}
+  .btn-secondary{padding:12px 22px;background:transparent;color:var(--ink);border:1px solid var(--border);border-radius:2px;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .btn-secondary:hover:not(:disabled){background:var(--surface2);border-color:var(--ink3);}
+  .btn-secondary:disabled{opacity:.35;cursor:not-allowed;}
+  .status-msg{font-family:'Fira Code',monospace;font-size:12px;color:var(--ink3);}
+  /* STATS */
+  .stats-bar{display:flex;gap:1px;margin-bottom:20px;background:var(--border);border:1px solid var(--border);border-radius:2px;overflow:hidden;}
+  .stat-block{flex:1;background:var(--surface);padding:14px 20px;}
+  .stat-num{font-size:28px;font-weight:800;line-height:1;letter-spacing:-0.04em;}
+  .stat-num.red{color:var(--accent);}
+  .stat-num.green{color:var(--found);}
+  .stat-num.orange{color:var(--flag);}
+  .stat-num.grey{color:var(--ink3);}
+  .stat-label{font-family:'Fira Code',monospace;font-size:10px;color:var(--ink3);margin-top:3px;text-transform:uppercase;letter-spacing:.1em;}
+  /* LEGEND */
+  .legend{display:flex;align-items:center;gap:20px;padding:10px 24px;background:#fffbf0;border-bottom:1px solid #e8ddb8;font-family:'Fira Code',monospace;font-size:11px;color:#7a6a30;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .swatch{display:inline-block;padding:1px 7px;border-radius:2px;font-weight:700;font-size:12px;}
+  .swatch.replaced{background:#d4f0d4;color:#1a6b3c;border:1px solid #a8d8b8;}
+  .swatch.flagged{background:#fff3e0;color:var(--flag);border:1px solid #f0c080;}
+  .swatch.pending{background:#ffd0cb;color:var(--accent);border-bottom:2px solid var(--accent);}
+  /* DOC VIEW */
+  .doc-view-card{background:var(--surface);border:1px solid var(--border);border-radius:2px;overflow:visible;}
+  .doc-body{padding:32px 48px;font-size:15px;line-height:2.1;color:var(--ink2);font-family:Georgia,'Times New Roman',serif;white-space:pre-wrap;word-break:break-word;}
+  /* TRIGGER WORD SPAN */
+  .tw{position:relative;display:inline;cursor:pointer;border-radius:2px;padding:1px 3px;font-weight:700;font-family:inherit;font-size:inherit;transition:background .12s;}
+  .tw.state-pending{background:#ffd0cb;color:var(--accent);border-bottom:2px solid var(--accent);}
+  .tw.state-pending:hover{background:#ffb0a4;}
+  .tw.state-replaced{background:#d4f0d4;color:var(--found);border-bottom:2px solid var(--found);cursor:default;}
+  .tw.state-flagged{background:var(--flag-bg);color:var(--flag);border-bottom:2px solid var(--flag);cursor:default;}
+  /* POPOVER */
+  .popover{display:none;position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);z-index:999;background:#fff;border:1px solid #d0c8bc;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.16);padding:14px 16px;min-width:240px;max-width:320px;pointer-events:all;white-space:normal;}
+  .popover::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:#fff;}
+  .popover::before{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:9px solid transparent;border-top-color:#d0c8bc;margin-top:1px;}
+  .tw.state-pending:hover .popover{display:block;}
+  .popover-label{font-family:'Fira Code',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink3);margin-bottom:8px;}
+  .popover-syns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .syn-btn{padding:5px 11px;background:var(--syn-bg);border:1px solid #b0c8e0;color:var(--syn);border-radius:3px;font-family:'Fira Code',monospace;font-size:12px;font-weight:500;cursor:pointer;transition:background .12s;}
+  .syn-btn:hover{background:#c0d8ee;}
+  .flag-btn{width:100%;padding:6px;background:#fff8f0;border:1px solid #f0c080;color:var(--flag);border-radius:3px;font-family:'Fira Code',monospace;font-size:11px;cursor:pointer;text-align:center;transition:background .12s;}
+  .flag-btn:hover{background:#fff0d8;}
+  .popover-nosyn{font-family:'Fira Code',monospace;font-size:11px;color:var(--ink3);font-style:italic;margin-bottom:8px;}
+  /* undo row */
+  .undo-row{display:flex;align-items:center;gap:8px;font-family:'Fira Code',monospace;font-size:11px;color:var(--ink3);}
+  .undo-link{color:var(--accent);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:'Fira Code',monospace;font-size:11px;padding:0;}
+  .undo-link:hover{opacity:.7;}
+  /* empty */
+  .empty-state{text-align:center;padding:60px 0;color:var(--ink3);}
+  .empty-icon{font-size:44px;margin-bottom:12px;}
+  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-area">
+    <div class="logo-mark">⚡</div>
+    <div>
+      <div class="logo-text">Uncaged Quill</div>
+      <div class="logo-sub">// your document never leaves this device</div>
+    </div>
+  </div>
+  <div class="offline-badge" id="modeBadge"><div class="dot" id="modeDot"></div><span id="modeLabel">checking…</span></div>
+</header>
+
+<main>
+  <div class="setup-grid">
+    <div class="card">
+      <div class="card-label">01 — Document</div>
+      <div class="upload-zone" id="docZone">
+        <input type="file" id="docInput" accept=".docx"/>
+        <div class="upload-icon">📄</div>
+        <div class="upload-title">Upload .docx file</div>
+        <div class="upload-hint">drag & drop or click to browse</div>
+      </div>
+      <div id="docStatus"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">02 — Trigger Words</div>
+      <div class="upload-zone" id="triggerZone">
+        <input type="file" id="triggerInput" accept=".txt,.csv"/>
+        <div class="upload-icon">🎯</div>
+        <div class="upload-title">Upload trigger word list</div>
+        <div class="upload-hint">.txt or .csv · one word per line or comma-separated</div>
+      </div>
+      <div id="triggerStatus"></div>
+      <div class="trigger-chips" id="triggerChips"></div>
+    </div>
+  </div>
+
+  <div class="analyze-row">
+    <button class="btn-primary" id="analyzeBtn" disabled onclick="analyze()">⚡ Scan Document</button>
+    <button class="btn-secondary" id="downloadBtn" disabled onclick="downloadDocx()">↓ Download Revised .docx</button>
+    <button class="btn-secondary" id="downloadHighlightBtn" disabled onclick="downloadHighlighted()">↓ Download Highlighted .docx</button>
+    <span class="status-msg" id="statusMsg"></span>
+  </div>
+
+  <div id="resultsArea"></div>
+</main>
+
+<script>
+const THESAURUS = {
+  "abandon": ["relinquish", "vacate", "withdraw from", "leave behind", "give up"],
+  "abolish": ["eliminate", "end", "remove", "discontinue", "phase out"],
+  "abuse": ["mistreat", "misuse", "exploit", "maltreat", "harm"],
+  "access": ["entry", "admission", "reach", "approach", "gateway"],
+  "accusation": ["allegation", "charge", "claim", "indictment", "assertion"],
+  "acquire": ["obtain", "gain", "secure", "procure", "attain"],
+  "action": ["measure", "step", "initiative", "undertaking", "effort"],
+  "activity": ["operation", "endeavor", "pursuit", "function", "task"],
+  "address": ["handle", "approach", "tackle", "respond to", "deal with"],
+  "advance": ["progress", "promote", "develop", "proceed", "move forward"],
+  "adversary": ["opponent", "rival", "competitor", "challenger", "counterpart"],
+  "affect": ["influence", "impact", "alter", "shape", "modify"],
+  "aggressive": ["assertive", "forceful", "vigorous", "proactive", "intense"],
+  "agitate": ["stir up", "provoke", "incite", "stimulate", "mobilize"],
+  "alert": ["notify", "inform", "advise", "caution", "signal"],
+  "alliance": ["partnership", "coalition", "agreement", "cooperation", "association"],
+  "analyze": ["examine", "assess", "evaluate", "study", "review"],
+  "announce": ["declare", "disclose", "reveal", "publish", "communicate"],
+  "antagonize": ["oppose", "challenge", "work against", "create friction with", "confront"],
+  "anticipate": ["expect", "foresee", "predict", "prepare for", "plan for"],
+  "apprehend": ["detain", "seize", "capture", "arrest", "hold"],
+  "approach": ["method", "strategy", "technique", "process", "way"],
+  "arm": ["equip", "provision", "supply", "outfit", "furnish"],
+  "arrest": ["detain", "apprehend", "hold", "take into custody", "stop"],
+  "assault": ["attack", "offensive", "strike", "confrontation", "incursion"],
+  "assess": ["evaluate", "examine", "review", "measure", "gauge"],
+  "asset": ["resource", "holding", "property", "advantage", "value"],
+  "attack": ["initiative", "action", "operation", "drive", "push"],
+  "authorize": ["approve", "permit", "sanction", "allow", "empower"],
+  "bad": ["poor", "inferior", "substandard", "deficient", "flawed"],
+  "ban": ["prohibit", "forbid", "restrict", "bar", "exclude"],
+  "barrier": ["obstacle", "impediment", "restriction", "boundary", "limitation"],
+  "blackmail": ["coerce", "extort", "pressure", "compel", "threaten"],
+  "block": ["obstruct", "impede", "hinder", "prevent", "restrict"],
+  "bomb": ["explosive device", "ordnance", "munition", "detonator", "charge"],
+  "boycott": ["abstain from", "refuse to use", "avoid", "not participate in", "withdraw from"],
+  "breach": ["violation", "gap", "rupture", "compromise", "infringement"],
+  "bribe": ["corrupt", "suborn", "incentivize improperly", "induce", "coerce financially"],
+  "burden": ["obligation", "responsibility", "weight", "challenge", "difficulty"],
+  "bypass": ["circumvent", "skirt", "avoid", "work around", "go around"],
+  "campaign": ["initiative", "program", "effort", "drive", "operation"],
+  "cancel": ["terminate", "revoke", "rescind", "nullify", "discontinue"],
+  "capture": ["obtain", "secure", "seize", "apprehend", "record"],
+  "casualty": ["loss", "affected person", "impacted individual", "injured party", "those affected"],
+  "censorship": ["content restriction", "information control", "limited access", "suppression", "filtering"],
+  "challenge": ["obstacle", "difficulty", "issue", "concern", "matter"],
+  "change": ["modify", "alter", "adjust", "revise", "transform"],
+  "charge": ["accuse", "allege", "assert", "claim", "indict"],
+  "cheat": ["deceive", "defraud", "mislead", "manipulate", "swindle"],
+  "civilian": ["non-combatant", "resident", "member of the public", "individual", "person"],
+  "classified": ["restricted", "confidential", "protected", "sensitive", "non-public"],
+  "coerce": ["compel", "pressure", "force", "constrain", "oblige"],
+  "collapse": ["failure", "breakdown", "deterioration", "decline", "end"],
+  "combat": ["address", "counter", "tackle", "oppose", "work against"],
+  "command": ["direct", "lead", "oversee", "govern", "manage"],
+  "community": ["group", "population", "residents", "neighborhood", "society"],
+  "competition": ["rivalry", "contest", "challenge", "opposition", "race"],
+  "conceal": ["hide", "withhold", "suppress", "obscure", "mask"],
+  "concern": ["issue", "matter", "consideration", "point", "topic"],
+  "confiscate": ["seize", "impound", "appropriate", "take", "remove"],
+  "conflict": ["dispute", "disagreement", "tension", "friction", "difference"],
+  "contaminate": ["pollute", "taint", "affect", "compromise", "degrade"],
+  "control": ["manage", "regulate", "govern", "oversee", "administer"],
+  "controversial": ["debated", "disputed", "contested", "sensitive", "complex"],
+  "corrupt": ["dishonest", "unethical", "fraudulent", "depraved", "compromised"],
+  "cover": ["shield", "protect", "conceal", "mask", "address"],
+  "crack": ["breach", "break", "compromise", "penetrate", "split"],
+  "crime": ["offense", "violation", "infraction", "wrongdoing", "misconduct"],
+  "criminal": ["offender", "perpetrator", "wrongdoer", "lawbreaker", "violator"],
+  "crisis": ["emergency", "situation", "challenge", "difficulty", "incident"],
+  "critical": ["crucial", "vital", "essential", "significant", "key"],
+  "crush": ["suppress", "overcome", "defeat", "eliminate", "neutralize"],
+  "damage": ["harm", "impair", "compromise", "degrade", "affect"],
+  "danger": ["hazard", "risk", "concern", "threat", "peril"],
+  "data": ["information", "records", "details", "content", "material"],
+  "deal": ["arrangement", "agreement", "transaction", "partnership", "plan"],
+  "deceive": ["mislead", "misrepresent", "delude", "distort", "misinform"],
+  "defeat": ["overcome", "counter", "address", "neutralize", "resolve"],
+  "defend": ["protect", "safeguard", "support", "uphold", "maintain"],
+  "delete": ["remove", "erase", "purge", "eliminate", "expunge"],
+  "demand": ["require", "request", "need", "seek", "call for"],
+  "deny": ["refute", "reject", "decline", "withhold", "refuse"],
+  "deprive": ["withhold from", "deny", "restrict access to", "remove", "cut off"],
+  "destroy": ["dismantle", "eliminate", "decommission", "remove", "discontinue"],
+  "detain": ["hold", "keep", "retain", "restrict", "confine"],
+  "detect": ["identify", "discover", "find", "uncover", "recognize"],
+  "detonate": ["trigger", "activate", "set off", "discharge", "fire"],
+  "devastate": ["severely affect", "damage", "harm", "impact greatly", "disrupt"],
+  "discriminate": ["differentiate", "treat unequally", "single out", "exclude", "segregate"],
+  "disrupt": ["interrupt", "disturb", "interfere with", "affect", "impact"],
+  "dominate": ["lead", "control", "prevail", "oversee", "govern"],
+  "domination": ["control", "leadership", "authority", "governance", "oversight"],
+  "drug": ["substance", "compound", "medication", "formula", "chemical agent"],
+  "dump": ["discard", "dispose of", "offload", "transfer", "release"],
+  "eliminate": ["remove", "end", "discontinue", "resolve", "address"],
+  "embed": ["integrate", "include", "place", "incorporate", "insert"],
+  "emergency": ["urgent situation", "incident", "critical event", "priority matter", "pressing concern"],
+  "enforce": ["implement", "apply", "uphold", "execute", "carry out"],
+  "engage": ["involve", "participate", "interact", "connect", "communicate"],
+  "eradicate": ["eliminate", "remove", "end", "address", "resolve"],
+  "escalate": ["increase", "intensify", "grow", "rise", "expand"],
+  "evade": ["avoid", "bypass", "circumvent", "elude", "escape"],
+  "execute": ["carry out", "implement", "perform", "conduct", "complete"],
+  "exploit": ["leverage", "utilize", "use strategically", "apply", "maximize"],
+  "expose": ["reveal", "disclose", "uncover", "surface", "bring to light"],
+  "extort": ["coerce", "pressure", "demand from", "extract from", "compel"],
+  "extreme": ["significant", "substantial", "considerable", "notable", "marked"],
+  "extremism": ["radicalism", "hardline position", "fringe views", "militant stance", "uncompromising ideology"],
+  "fail": ["fall short", "underperform", "not meet expectations", "struggle", "be insufficient"],
+  "fake": ["false", "inaccurate", "fabricated", "erroneous", "misleading"],
+  "fear": ["concern", "apprehension", "worry", "unease", "anxiety"],
+  "fight": ["oppose", "counter", "address", "challenge", "contest"],
+  "force": ["compel", "require", "direct", "drive", "pressure"],
+  "foreign": ["international", "external", "overseas", "non-domestic", "offshore"],
+  "fraud": ["deception", "misrepresentation", "misconduct", "irregularity", "falsification"],
+  "free": ["unrestricted", "open", "available", "accessible", "unencumbered"],
+  "gain": ["acquire", "obtain", "achieve", "secure", "attain"],
+  "genocide": ["mass atrocity", "ethnic persecution", "systematic elimination", "mass violence", "targeted destruction"],
+  "government": ["administration", "authority", "institution", "agency", "body"],
+  "grab": ["seize", "take", "obtain", "secure", "acquire"],
+  "group": ["organization", "body", "community", "network", "association"],
+  "hack": ["breach", "intrude", "gain unauthorized access", "compromise", "penetrate"],
+  "harm": ["damage", "hurt", "impair", "affect", "impact"],
+  "hate": ["animosity", "hostility", "strong opposition", "aversion", "enmity"],
+  "hide": ["conceal", "withhold", "suppress", "mask", "shield"],
+  "hostage": ["captive", "detained individual", "held person", "prisoner", "person in custody"],
+  "hostile": ["adversarial", "opposing", "unfavorable", "negative", "resistant"],
+  "humiliate": ["embarrass", "demean", "disrespect", "diminish", "undermine"],
+  "illegal": ["unlawful", "unauthorized", "prohibited", "non-compliant", "impermissible"],
+  "impact": ["affect", "influence", "shape", "alter", "change"],
+  "impose": ["apply", "enforce", "institute", "implement", "introduce"],
+  "incite": ["provoke", "encourage", "motivate", "stir", "prompt"],
+  "indoctrinate": ["train", "instruct", "condition", "teach", "shape the views of"],
+  "infiltrate": ["enter", "access", "become part of", "join", "integrate into"],
+  "influence": ["affect", "shape", "guide", "direct", "impact"],
+  "injustice": ["unfairness", "inequality", "inequity", "wrongdoing", "mistreatment"],
+  "intercept": ["capture", "obtain", "block", "receive", "stop"],
+  "intimidate": ["pressure", "discourage", "deter", "dissuade", "unsettle"],
+  "invade": ["enter", "breach", "intrude upon", "encroach", "trespass"],
+  "investigate": ["examine", "review", "analyze", "assess", "look into"],
+  "isolate": ["separate", "detach", "quarantine", "segment", "disconnect"],
+  "kidnap": ["abduct", "take without consent", "unlawfully detain", "seize", "hold"],
+  "kill": ["terminate", "end", "stop", "discontinue", "cease"],
+  "launch": ["initiate", "deploy", "begin", "start", "roll out"],
+  "leak": ["disclosure", "release", "sharing", "divulgence", "publication"],
+  "lie": ["misrepresent", "fabricate", "state inaccurately", "misinform", "falsify"],
+  "limit": ["restrict", "cap", "constrain", "reduce", "regulate"],
+  "lock": ["secure", "restrict", "protect", "prevent access to", "seal"],
+  "lure": ["attract", "draw in", "entice", "recruit", "bring in"],
+  "manipulate": ["influence", "shape", "guide", "engineer", "adjust"],
+  "mass": ["large-scale", "widespread", "broad", "extensive", "significant"],
+  "massacre": ["mass violence", "large-scale harm", "atrocity", "widespread harm", "mass incident"],
+  "menace": ["threat", "risk", "danger", "concern", "hazard"],
+  "militant": ["activist", "hardliner", "advocate", "partisan", "committed member"],
+  "military": ["defense", "armed forces", "security forces", "defense personnel", "service members"],
+  "monitor": ["track", "observe", "review", "oversee", "assess"],
+  "movement": ["group", "organization", "initiative", "effort", "cause"],
+  "network": ["group", "organization", "community", "system", "infrastructure"],
+  "obtain": ["acquire", "secure", "gain", "get", "receive"],
+  "offensive": ["initiative", "operation", "push", "drive", "campaign"],
+  "operate": ["function", "work", "run", "perform", "execute"],
+  "oppression": ["suppression", "unjust treatment", "restriction", "subjugation", "unfair control"],
+  "organize": ["coordinate", "manage", "arrange", "structure", "plan"],
+  "override": ["supersede", "replace", "overrule", "take precedence over", "bypass"],
+  "overthrow": ["remove", "replace", "unseat", "displace", "depose"],
+  "penetrate": ["access", "enter", "breach", "reach", "get through"],
+  "persecute": ["harass", "target", "mistreat", "discriminate against", "oppress"],
+  "poison": ["contaminate", "taint", "corrupt", "pollute", "degrade"],
+  "propaganda": ["messaging", "communication", "narrative", "information campaign", "content"],
+  "protest": ["demonstration", "gathering", "expression of concern", "objection", "dissent"],
+  "punish": ["penalize", "sanction", "discipline", "hold accountable", "take action against"],
+  "radical": ["significant", "major", "substantial", "transformative", "fundamental"],
+  "raid": ["operation", "action", "intervention", "inspection", "review"],
+  "rebel": ["resist", "oppose", "dissent", "push back", "object"],
+  "recruit": ["hire", "enlist", "attract", "bring on", "engage"],
+  "regime": ["administration", "government", "authority", "ruling body", "leadership"],
+  "repress": ["suppress", "restrict", "control", "limit", "constrain"],
+  "repression": ["suppression", "restriction", "control", "limitation", "crackdown"],
+  "resistance": ["opposition", "pushback", "challenge", "objection", "dissent"],
+  "restrict": ["limit", "regulate", "constrain", "reduce", "cap"],
+  "retaliate": ["respond", "counter", "react", "take action", "address"],
+  "revolution": ["transformation", "major change", "overhaul", "restructuring", "reform"],
+  "riot": ["civil unrest", "public disturbance", "disorder", "public incident", "social unrest"],
+  "risk": ["concern", "consideration", "challenge", "uncertainty", "exposure"],
+  "sabotage": ["undermine", "disrupt", "interfere with", "damage", "compromise"],
+  "secret": ["confidential", "non-public", "private", "internal", "undisclosed"],
+  "seize": ["take", "obtain", "acquire", "secure", "appropriate"],
+  "sensitive": ["confidential", "restricted", "protected", "private", "delicate"],
+  "siege": ["blockade", "encirclement", "sustained operation", "prolonged action", "surrounding"],
+  "slaughter": ["mass killing", "large-scale harm", "atrocity", "violent incident", "tragic event"],
+  "smuggle": ["transport without authorization", "move covertly", "traffic", "carry illegally", "transfer without approval"],
+  "smuggling": ["unauthorized transport", "illegal transfer", "covert movement", "unlawful trade", "illicit transport"],
+  "spy": ["monitor", "observe covertly", "gather intelligence on", "surveil", "track"],
+  "steal": ["take without authorization", "misappropriate", "remove without permission", "pilfer", "obtain improperly"],
+  "strike": ["action", "operation", "initiative", "move", "step"],
+  "subvert": ["undermine", "disrupt", "weaken", "destabilize", "erode"],
+  "suppress": ["withhold", "restrict", "limit", "prevent", "block"],
+  "surveillance": ["monitoring", "observation", "tracking", "oversight", "review"],
+  "suspect": ["person of interest", "individual", "subject", "party", "respondent"],
+  "takeover": ["acquisition", "change of control", "transition", "transfer of power", "restructuring"],
+  "target": ["focus on", "address", "direct attention to", "prioritize", "aim at"],
+  "terminate": ["end", "conclude", "discontinue", "close", "finalize"],
+  "terror": ["extremism", "political violence", "intimidation", "coercion", "threatening behavior"],
+  "threat": ["risk", "concern", "challenge", "potential issue", "warning"],
+  "torture": ["mistreatment", "abuse", "cruel treatment", "inhumane treatment", "harsh interrogation"],
+  "track": ["monitor", "follow", "observe", "trace", "review"],
+  "traffic": ["transport", "move", "transfer", "distribute", "handle"],
+  "trap": ["catch", "detect", "identify", "intercept", "uncover"],
+  "unauthorized": ["unapproved", "unsanctioned", "non-compliant", "impermissible", "without approval"],
+  "undermine": ["weaken", "erode", "compromise", "destabilize", "reduce"],
+  "unsafe": ["hazardous", "risky", "concerning", "problematic", "precarious"],
+  "uprising": ["unrest", "civil action", "revolt", "popular movement", "public demonstration"],
+  "urgent": ["pressing", "immediate", "priority", "time-sensitive", "critical"],
+  "vandalism": ["property damage", "destruction", "defacement", "deliberate damage", "willful damage"],
+  "violence": ["aggression", "physical harm", "hostile action", "forceful action", "coercive force"],
+  "vulnerable": ["at risk", "exposed", "susceptible", "unprotected", "fragile"],
+  "warfare": ["conflict", "hostilities", "armed confrontation", "combat operations", "military engagement"],
+  "warning": ["notice", "alert", "advisory", "caution", "guidance"],
+  "weapon": ["tool", "instrument", "device", "implement", "equipment"],
+  "withhold": ["retain", "not share", "hold back", "keep", "suppress"],
+  "xenophobia": ["prejudice", "discrimination", "bias", "intolerance", "hostility toward others"],
+};
+
+
+// ── SYNONYM ENGINE: Datamuse + offline fallback ───────────────────────────────
+let isOnline = false;
+const synCache = {}; // word -> [synonyms] — avoid refetching
+
+async function checkOnline() {
+  try {
+    const r = await fetch('https://api.datamuse.com/words?rel_syn=test&max=1', {signal: AbortSignal.timeout(3000)});
+    isOnline = r.ok;
+  } catch { isOnline = false; }
+  const badge = document.getElementById('modeBadge');
+  const dot   = document.getElementById('modeDot');
+  const label = document.getElementById('modeLabel');
+  if (isOnline) {
+    badge.className = 'offline-badge online';
+    dot.className   = 'dot online';
+    label.textContent = 'online · Datamuse synonyms';
+  } else {
+    badge.className = 'offline-badge offline';
+    dot.className   = 'dot offline';
+    label.textContent = 'offline · built-in dictionary';
+  }
+}
+checkOnline();
+
+// Fetch from Datamuse: rel_syn = true synonyms, ml = "means like" for broader coverage
+// Returns ALL candidates unfiltered — filtering happens in getSynonyms
+async function fetchDatamuse(word) {
+  try {
+    const [synRes, mlRes] = await Promise.all([
+      fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(word)}&max=30`),
+      fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(word)}&max=30`)
+    ]);
+    const synData = await synRes.json();
+    const mlData  = await mlRes.json();
+    const seen = new Set([word.toLowerCase()]);
+    const merged = [];
+    for (const item of [...synData, ...mlData]) {
+      const w = item.word.toLowerCase();
+      if (!seen.has(w) && /^[a-z\s-]+$/.test(w)) {
+        seen.add(w);
+        merged.push({word: item.word, score: item.score || 0});
+      }
+    }
+    merged.sort((a,b) => b.score - a.score);
+    return merged.map(x => x.word); // return all, unsliced
+  } catch { return []; }
+}
+
+function getOfflineSynonyms(word, triggerWordSet, max=5) {
+  return (THESAURUS[word.toLowerCase()] || [])
+    .filter(s => !triggerWordSet.has(s.toLowerCase()))
+    .slice(0, max);
+}
+
+// triggerWordSet = flat set of every individual word from all trigger phrases
+async function getSynonyms(word, triggerWordSet, max=8) {
+  const key = word.toLowerCase();
+
+  // Fetch raw candidates (cached per word, always unfiltered)
+  if (!synCache[key]) {
+    let raw = [];
+    if (isOnline) raw = await fetchDatamuse(key);
+    // Merge offline candidates — deduplicate
+    const offline = THESAURUS[key] || [];
+    const seen = new Set(raw.map(w => w.toLowerCase()));
+    for (const w of offline) {
+      if (!seen.has(w.toLowerCase())) { seen.add(w.toLowerCase()); raw.push(w); }
+    }
+    synCache[key] = raw; // store raw, unfiltered
+  }
+
+  // Filter: exclude anything that is itself a trigger word OR contains a trigger word
+  return synCache[key]
+    .filter(s => {
+      const sl = s.toLowerCase();
+      if (sl === key) return false;
+      // Check every individual word in the suggestion against triggerWordSet
+      return sl.split(/\s+/).every(part => !triggerWordSet.has(part));
+    })
+    .slice(0, max);
+}
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let docSections = [];
+let triggerWords = [];
+let originalFile = null;
+let originalArrayBuffer = null; // raw bytes of the uploaded .docx — used for format-preserving download
+
+// Each annotated token in the doc: {id, type:'text'|'trigger', text, word, state:'pending'|'replaced'|'flagged', replacement}
+let tokens = [];
+
+// ── FILE LOADING ─────────────────────────────────────────────────────────────
+document.getElementById('docInput').addEventListener('change', e => { if(e.target.files[0]) loadDocx(e.target.files[0]); });
+document.getElementById('triggerInput').addEventListener('change', e => { if(e.target.files[0]) loadTriggerFile(e.target.files[0]); });
+['docZone','triggerZone'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e=>{e.preventDefault();el.classList.add('drag-over');});
+  el.addEventListener('dragleave', ()=>el.classList.remove('drag-over'));
+  el.addEventListener('drop', e=>{e.preventDefault();el.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(!f)return;if(id==='docZone')loadDocx(f);else loadTriggerFile(f);});
+});
+
+async function loadDocx(file) {
+  originalFile = file;
+  const s = document.getElementById('docStatus');
+  s.innerHTML = '<div class="file-loaded" style="background:#fff8e8;border-color:#e8d898;color:#7a6a20;">⏳ Parsing…</div>';
+  try {
+    const buf = await file.arrayBuffer();
+    originalArrayBuffer = buf.slice(0); // keep a clean copy for download
+    const res = await mammoth.extractRawText({arrayBuffer: buf});
+    docSections = [{name: file.name, text: res.value}];
+    s.innerHTML = `<div class="file-loaded">✓ ${file.name} loaded (${res.value.split(/\s+/).filter(Boolean).length} words)</div>`;
+    checkReady();
+  } catch(err) {
+    s.innerHTML = `<div class="file-loaded" style="background:#fdecea;border-color:#f5b8b2;color:var(--accent);">✗ ${err.message}</div>`;
+  }
+}
+
+function loadTriggerFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    triggerWords = [...new Set(
+      e.target.result
+        .split(/[\n\r]+/)
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'))
+        .flatMap(line => line.split(/[,;]+/))
+        .map(w => w.trim().toLowerCase().replace(/^["']|["']$/g,''))
+        .filter(w => w)
+    )];
+    document.getElementById('triggerStatus').innerHTML = `<div class="file-loaded">✓ ${file.name} · ${triggerWords.length} words</div>`;
+    document.getElementById('triggerChips').innerHTML = triggerWords.slice(0,80).map(w=>`<span class="trigger-chip">${w}</span>`).join('') + (triggerWords.length>80?`<span class="trigger-chip">+${triggerWords.length-80} more</span>`:'');
+    checkReady();
+  };
+  reader.readAsText(file);
+}
+
+function checkReady() {
+  document.getElementById('analyzeBtn').disabled = !(docSections.length && triggerWords.length);
+}
+
+// ── TOKENIZE ─────────────────────────────────────────────────────────────────
+function escR(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function escH(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function tokenize(text, triggerSet, synonymMap) {
+  const result = [];
+  // Build combined regex for all trigger words
+  const pattern = new RegExp('\\b(' + triggerWords.map(escR).join('|') + ')\\b', 'gi');
+  let last = 0, m, tid = 0;
+  while ((m = pattern.exec(text)) !== null) {
+    if (m.index > last) result.push({id: tid++, type:'text', text: text.slice(last, m.index)});
+    const word = m[0].toLowerCase();
+    result.push({id: tid++, type:'trigger', text: m[0], word, state:'pending', replacement: null, syns: synonymMap[word] || []});
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) result.push({id: tid++, type:'text', text: text.slice(last)});
+  return result;
+}
+
+// ── ANALYZE ──────────────────────────────────────────────────────────────────
+async function analyze() {
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  const statusEl = document.getElementById('statusMsg');
+
+  // First pass: find which trigger words actually appear in the doc
+  const fullText = docSections.map(s=>s.text).join('\n');
+  const triggerSet = new Set(triggerWords); // full phrases, for doc matching
+
+  // Flat set of every individual word from all trigger phrases
+  // e.g. "sense of belonging" adds "sense", "belonging" etc individually
+  // so none of those words appear as synonym suggestions
+  const triggerWordSet = new Set();
+  triggerWords.forEach(phrase => {
+    phrase.toLowerCase().split(/\s+/).forEach(w => { if (w.length > 1) triggerWordSet.add(w); });
+  });
+
+  const pattern = new RegExp('\\b(' + triggerWords.map(escR).join('|') + ')\\b', 'gi');
+  const foundWords = new Set();
+  let m;
+  while ((m = pattern.exec(fullText)) !== null) foundWords.add(m[0].toLowerCase());
+
+  if (!foundWords.size) {
+    document.getElementById('resultsArea').innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div>No trigger words found in the document.</div></div>';
+    statusEl.textContent = '';
+    btn.disabled = false;
+    return;
+  }
+
+  // Fetch synonyms only for words that actually appear
+  const wordsToFetch = [...foundWords];
+  const synonymMap = {};
+
+  if (isOnline) {
+    statusEl.textContent = `Fetching synonyms for ${wordsToFetch.length} words…`;
+    // Batch with small concurrency to avoid rate limiting
+    const BATCH = 5;
+    for (let i = 0; i < wordsToFetch.length; i += BATCH) {
+      const batch = wordsToFetch.slice(i, i + BATCH);
+      statusEl.textContent = `Fetching synonyms… (${Math.min(i+BATCH, wordsToFetch.length)}/${wordsToFetch.length})`;
+      await Promise.all(batch.map(async w => {
+        synonymMap[w] = await getSynonyms(w, triggerWordSet, 8);
+      }));
+    }
+  } else {
+    statusEl.textContent = 'Scanning…';
+    wordsToFetch.forEach(w => { synonymMap[w] = getOfflineSynonyms(w, triggerWordSet, 6); });
+  }
+
+  tokens = tokenize(fullText, triggerSet, synonymMap);
+  statusEl.textContent = '';
+  btn.disabled = false;
+  renderDoc();
+  document.getElementById('downloadBtn').disabled = false;
+  document.getElementById('downloadHighlightBtn').disabled = false;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderDoc() {
+  const tTokens = tokens.filter(t=>t.type==='trigger');
+  const pending = tTokens.filter(t=>t.state==='pending').length;
+  const replaced = tTokens.filter(t=>t.state==='replaced').length;
+  const flagged = tTokens.filter(t=>t.state==='flagged').length;
+
+  let html = `
+    <div class="stats-bar">
+      <div class="stat-block"><div class="stat-num red">${pending}</div><div class="stat-label">Pending</div></div>
+      <div class="stat-block"><div class="stat-num green">${replaced}</div><div class="stat-label">Replaced</div></div>
+      <div class="stat-block"><div class="stat-num orange">${flagged}</div><div class="stat-label">Flagged for manual edit</div></div>
+      <div class="stat-block"><div class="stat-num grey">${tTokens.length}</div><div class="stat-label">Total Hits</div></div>
+    </div>
+    <div class="doc-view-card">
+      <div class="legend">
+        <span>Hover any highlighted word to act:</span>
+        <span class="legend-item"><span class="swatch pending">word</span> pending decision</span>
+        <span class="legend-item"><span class="swatch replaced">word</span> replaced — click to undo</span>
+        <span class="legend-item"><span class="swatch flagged">word</span> flagged for manual edit — click to undo</span>
+      </div>
+      <div class="doc-body" id="docBody">`;
+
+  for (const tok of tokens) {
+    if (tok.type === 'text') {
+      html += escH(tok.text);
+    } else {
+      html += renderToken(tok);
+    }
+  }
+  html += `</div></div>`;
+  document.getElementById('resultsArea').innerHTML = html;
+}
+
+function renderToken(tok) {
+  const display = tok.state === 'replaced' ? escH(tok.replacement) : escH(tok.text);
+  const stateClass = `state-${tok.state}`;
+
+  if (tok.state === 'replaced' || tok.state === 'flagged') {
+    // Show undo inline on click — we show a mini undo tag
+    const label = tok.state === 'replaced'
+      ? `✓ replaced with "${escH(tok.replacement)}"`
+      : `⚑ flagged for manual edit`;
+    return `<span class="tw ${stateClass}" title="${label}" onclick="undoToken(${tok.id})">${display}</span>`;
+  }
+
+  // Pending — build popover
+  const synBtns = tok.syns.length
+    ? tok.syns.map(s => `<button class="syn-btn" onmousedown="replaceToken(event,${tok.id},'${s.replace(/'/g,"\\'")}')">→ ${escH(s)}</button>`).join('')
+    : `<div class="popover-nosyn">No synonyms in dictionary</div>`;
+
+  return `<span class="tw state-pending" id="tw-${tok.id}"><span class="popover"><div class="popover-label">💡 Suggestions for "${escH(tok.text)}"</div><div class="popover-syns">${synBtns}</div><button class="flag-btn" onmousedown="flagToken(event,${tok.id})">⚑ Keep & flag for manual edit</button></span>${escH(tok.text)}</span>`;
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function replaceToken(event, id, replacement) {
+  event.preventDefault();
+  event.stopPropagation();
+  const tok = tokens.find(t=>t.id===id);
+  if (!tok) return;
+  tok.state = 'replaced';
+  tok.replacement = replacement;
+  renderDoc();
+}
+
+function flagToken(event, id) {
+  event.preventDefault();
+  event.stopPropagation();
+  const tok = tokens.find(t=>t.id===id);
+  if (!tok) return;
+  tok.state = 'flagged';
+  renderDoc();
+}
+
+function undoToken(id) {
+  const tok = tokens.find(t=>t.id===id);
+  if (!tok) return;
+  tok.state = 'pending';
+  tok.replacement = null;
+  renderDoc();
+}
+
+// ── DOWNLOAD DOCX — format-preserving XML surgery ────────────────────────────
+// Strategy: unzip the original .docx, patch word/document.xml runs in-place,
+// repack. Every font, bold, table, image stays exactly as the user uploaded it.
+
+function xmlEsc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+
+// Split a <w:t> text value at word boundaries for trigger words.
+// Returns array of {text, kind} where kind = 'plain'|'replaced'|'flagged'
+function splitRunText(text, replacements, flags) {
+  // replacements: Map<lowerCaseOriginal, replacementText>
+  // flags: Set<lowerCaseOriginal>
+  if (!replacements.size && !flags.size) return [{text, kind:'plain'}];
+
+  const allWords = new Set([...replacements.keys(), ...flags]);
+  const pattern = new RegExp('\\b(' + [...allWords].map(w => w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|') + ')\\b', 'gi');
+  const parts = [];
+  let last = 0, m;
+  while ((m = pattern.exec(text)) !== null) {
+    if (m.index > last) parts.push({text: text.slice(last, m.index), kind:'plain'});
+    const key = m[0].toLowerCase();
+    if (replacements.has(key)) {
+      parts.push({text: replacements.get(key), kind:'replaced'});
+    } else {
+      parts.push({text: m[0], kind:'flagged'});
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({text: text.slice(last), kind:'plain'});
+  return parts;
+}
+
+// Given a <w:r> element string (with its <w:rPr> intact), produce replacement XML
+// that keeps the original rPr but splits/colours the text content
+function patchRun(runXml, rPrXml, textContent, replacements, flags) {
+  const parts = splitRunText(textContent, replacements, flags);
+  if (parts.length === 1 && parts[0].kind === 'plain') return runXml; // no change
+
+  return parts.map(({text, kind}) => {
+    if (!text) return '';
+    const space = (text.startsWith(' ') || text.endsWith(' ')) ? ' xml:space="preserve"' : '';
+    const t = xmlEsc(text);
+
+    if (kind === 'replaced') {
+      // Inherit original rPr, add green colour
+      const newRPr = rPrXml
+        ? rPrXml.replace('</w:rPr>', '<w:color w:val="1A6B3C"/></w:rPr>')
+        : '<w:rPr><w:color w:val="1A6B3C"/></w:rPr>';
+      return `<w:r>${newRPr}<w:t${space}>${t}</w:t></w:r>`;
+    } else if (kind === 'flagged') {
+      // Inherit original rPr, add yellow highlight
+      const newRPr = rPrXml
+        ? rPrXml.replace('</w:rPr>', '<w:highlight w:val="yellow"/><w:color w:val="B85C00"/></w:rPr>')
+        : '<w:rPr><w:highlight w:val="yellow"/><w:color w:val="B85C00"/></w:rPr>';
+      return `<w:r>${newRPr}<w:t${space}>${t}</w:t></w:r>`;
+    } else {
+      // Plain — restore original run exactly
+      return `<w:r>${rPrXml || ''}<w:t${space}>${t}</w:t></w:r>`;
+    }
+  }).join('');
+}
+
+function patchDocumentXml(xml, replacements, flags) {
+  // Match every <w:r>...</w:r> that contains a <w:t>
+  // We need to handle: optional <w:rPr>...</w:rPr>, then <w:t ...>text</w:t>
+  // Use a stateful approach: find each <w:r>, extract rPr + t content, patch, substitute
+
+  return xml.replace(
+    /(<w:r\b[^>]*>)([\s\S]*?)(<\/w:r>)/g,
+    (fullMatch, open, inner, close) => {
+      // Extract <w:rPr>...</w:rPr> if present
+      const rPrMatch = inner.match(/(<w:rPr[\s\S]*?<\/w:rPr>)/);
+      const rPrXml = rPrMatch ? rPrMatch[1] : '';
+
+      // Extract <w:t ...>...</w:t>
+      const tMatch = inner.match(/<w:t(?:[^>]*)>([\s\S]*?)<\/w:t>/);
+      if (!tMatch) return fullMatch; // no text content, leave unchanged
+
+      // Decode XML entities in the text before matching
+      const rawText = tMatch[1]
+        .replace(/&amp;/g,'&').replace(/&lt;/g,'<')
+        .replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'");
+
+      return patchRun(fullMatch, rPrXml, rawText, replacements, flags);
+    }
+  );
+}
+
+async function downloadHighlighted() {
+  if (!tokens.length || !originalArrayBuffer) return;
+  const statusEl = document.getElementById('statusMsg');
+  statusEl.textContent = 'Building highlighted .docx…';
+
+  try {
+    // Treat every trigger word as flagged (yellow highlight) regardless of its current state
+    const flags = new Set();
+    for (const tok of tokens) {
+      if (tok.type === 'trigger') flags.add(tok.word);
+    }
+
+    if (!flags.size) {
+      statusEl.textContent = 'No trigger words found to highlight.';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      return;
+    }
+
+    // Use empty replacements map — everything goes to highlighted/flagged colour
+    const replacements = new Map();
+
+    const zip = await JSZip.loadAsync(originalArrayBuffer);
+    const docEntry = zip.file('word/document.xml');
+    if (!docEntry) throw new Error('Could not find word/document.xml in the uploaded file.');
+    const originalXml = await docEntry.async('string');
+    const patchedXml = patchDocumentXml(originalXml, replacements, flags);
+    zip.file('word/document.xml', patchedXml);
+
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      compression: 'DEFLATE'
+    });
+
+    const url  = URL.createObjectURL(blob);
+    const a    = window.document.createElement('a');
+    const base = originalFile ? originalFile.name.replace(/\.docx$/i,'') : 'document';
+    a.href     = url;
+    a.download = `${base}_highlighted.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    statusEl.textContent = '';
+  } catch(err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    console.error(err);
+  }
+}
+
+
+async function downloadDocx() {
+  if (!tokens.length || !originalArrayBuffer) return;
+  const statusEl = document.getElementById('statusMsg');
+  statusEl.textContent = 'Building .docx…';
+
+  try {
+    // Build lookup maps from token decisions
+    const replacements = new Map(); // lowercase original -> replacement text
+    const flags = new Set();        // lowercase originals that are flagged
+
+    for (const tok of tokens) {
+      if (tok.type !== 'trigger') continue;
+      if (tok.state === 'replaced') {
+        // Store all case variants we might encounter
+        replacements.set(tok.word, tok.replacement); // tok.word is already lowercase
+      } else if (tok.state === 'flagged') {
+        flags.add(tok.word);
+      }
+    }
+
+    if (!replacements.size && !flags.size) {
+      statusEl.textContent = 'No changes to apply — make some replacements or flags first.';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      return;
+    }
+
+    // Unzip original
+    const zip = await JSZip.loadAsync(originalArrayBuffer);
+
+    // Patch word/document.xml
+    const docEntry = zip.file('word/document.xml');
+    if (!docEntry) throw new Error('Could not find word/document.xml in the uploaded file.');
+    const originalXml = await docEntry.async('string');
+    const patchedXml = patchDocumentXml(originalXml, replacements, flags);
+    zip.file('word/document.xml', patchedXml);
+
+    // Generate and download
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      compression: 'DEFLATE'
+    });
+
+    const url  = URL.createObjectURL(blob);
+    const a    = window.document.createElement('a');
+    const base = originalFile ? originalFile.name.replace(/\.docx$/i,'') : 'document';
+    a.href     = url;
+    a.download = `${base}_revised.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    statusEl.textContent = '';
+  } catch(err) {
+    statusEl.textContent = 'Error: ' + err.message;
+    console.error(err);
+  }
+}
+</script>
+</body>
+</html>
